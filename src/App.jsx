@@ -12,7 +12,7 @@ const steps = [
   ['03', 'Present with confidence', 'You continue seeing the workspace on your monitor while people viewing your screen share see what is behind it.'],
 ]
 
-const installerUrl = import.meta.env.VITE_INSTALLER_URL || '/downloads/PrivateWindow-1.0-windows-x64-Setup.exe'
+const DEFAULT_INSTALLER = import.meta.env.VITE_INSTALLER_URL || '/downloads/PrivateWindow-1.0-windows-x64-Setup.exe'
 
 function Logo() {
   return <a className="logo" href="#top" aria-label="Private Window home"><span className="logo-mark">◇</span><span>private<span>window</span></span></a>
@@ -39,6 +39,23 @@ export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('privacy-screen-theme') || 'dark')
   const [menuOpen, setMenuOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [installerUrl, setInstallerUrl] = useState(DEFAULT_INSTALLER)
+
+  useEffect(() => {
+    // Load installer metadata published by the deploy script. Falls back to the
+    // build-time URL or local copy if the fetch fails.
+    fetch('/downloads/installer.json')
+      .then((r) => {
+        if (!r.ok) throw new Error('no metadata')
+        return r.json()
+      })
+      .then((data) => {
+        if (data && data.url) setInstallerUrl(data.url)
+      })
+      .catch(() => {
+        /* ignore and keep the default */
+      })
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
