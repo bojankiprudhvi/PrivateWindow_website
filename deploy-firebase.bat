@@ -15,12 +15,35 @@ set "SITE_DIR=%~dp0"
 set "RELEASE_DIR=%~dp0..\build-release"
 set "DOWNLOAD_DIR=%~dp0public\downloads"
 
-pushd "%~dp0.."
-call package-release.bat
-set "PACKAGE_RESULT=%ERRORLEVEL%"
-popd
+REM If the site already contains installer metadata, use that and skip packaging.
+if exist "%SITE_DIR%public\downloads\installer.json" (
+    for /f "usebackq delims=" %%U in (`powershell -NoProfile -Command "(Get-Content '%SITE_DIR%public\\downloads\\installer.json' -Raw | ConvertFrom-Json).url"`) do set "DOWNLOAD_URL=%%~U"
+    if defined DOWNLOAD_URL (
+        echo Using existing installer URL from public/downloads/installer.json
+        if not exist "%DOWNLOAD_DIR%" mkdir "%DOWNLOAD_DIR%"
+        echo { "url": "%DOWNLOAD_URL%" } > "%DOWNLOAD_DIR%\installer.json"
+        goto BUILD_ONLY
+    )
+)
 
-if not "%PACKAGE_RESULT%"=="0" exit /b %PACKAGE_RESULT%
+REM Prefer an already-built installer in ../build-release or in dist; otherwise run package-release.
+set "INSTALLER="
+for %%F in ("%RELEASE_DIR%\PrivateWindow-*-windows-x64-Setup.exe") do set "INSTALLER=%%~fF"
+if not defined INSTALLER (
+    if exist "%~dp0dist\downloads\PrivateWindow-*-windows-x64-Setup.exe" (
+        if not exist "%RELEASE_DIR%" mkdir "%RELEASE_DIR%"
+        copy /Y "%~dp0dist\downloads\PrivateWindow-*-windows-x64-Setup.exe" "%RELEASE_DIR%\" >nul 2>&1
+        for %%F in ("%RELEASE_DIR%\PrivateWindow-*-windows-x64-Setup.exe") do set "INSTALLER=%%~fF"
+    )
+)
+
+if not defined INSTALLER (
+    pushd "%~dp0.."
+    call package-release.bat
+    set "PACKAGE_RESULT=%ERRORLEVEL%"
+    popd
+    if not "%PACKAGE_RESULT%"=="0" exit /b %PACKAGE_RESULT%
+)
 
 set "INSTALLER="
 for %%F in ("%RELEASE_DIR%\PrivateWindow-*-windows-x64-Setup.exe") do set "INSTALLER=%%~fF"
