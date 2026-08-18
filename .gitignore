@@ -1,0 +1,16 @@
+# Build artifacts
+/dist/
+/build/
+
+# Node modules
+/node_modules/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Keep public/downloads/installer.json tracked; ignore any other downloads
+/dist/downloads/
+

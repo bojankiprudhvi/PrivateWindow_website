@@ -12,7 +12,7 @@ const steps = [
   ['03', 'Present with confidence', 'You continue seeing the workspace on your monitor while people viewing your screen share see what is behind it.'],
 ]
 
-const installerUrl = import.meta.env.VITE_INSTALLER_URL || '/downloads/PrivateWindow-1.0-windows-x64-Setup.exe'
+const DEFAULT_INSTALLER = import.meta.env.VITE_INSTALLER_URL || '/downloads/PrivateWindow-1.0-windows-x64-Setup.exe'
 
 function Logo() {
   return <a className="logo" href="#top" aria-label="Private Window home"><span className="logo-mark">◇</span><span>private<span>window</span></span></a>
@@ -39,6 +39,23 @@ export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('privacy-screen-theme') || 'dark')
   const [menuOpen, setMenuOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [installerUrl, setInstallerUrl] = useState(DEFAULT_INSTALLER)
+
+  useEffect(() => {
+    // Load installer metadata published by the deploy script. Falls back to the
+    // build-time URL or local copy if the fetch fails.
+    fetch('/downloads/installer.json')
+      .then((r) => {
+        if (!r.ok) throw new Error('no metadata')
+        return r.json()
+      })
+      .then((data) => {
+        if (data && data.url) setInstallerUrl(data.url)
+      })
+      .catch(() => {
+        /* ignore and keep the default */
+      })
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -53,6 +70,11 @@ export default function App() {
 
   const closeMenu = () => setMenuOpen(false)
   const openDownload = () => { setModalOpen(true); closeMenu() }
+  const handleDownload = (e) => {
+    e.preventDefault()
+    window.open(installerUrl, '_blank', 'noopener')
+    closeMenu()
+  }
 
   return <div id="top" className="site-shell">
     <header className="nav-wrap">
@@ -60,7 +82,7 @@ export default function App() {
         <Logo />
         <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
           <a href="#how-it-works" onClick={closeMenu}>How it works</a><a href="#features" onClick={closeMenu}>Features</a><a href="#privacy" onClick={closeMenu}>Privacy</a>
-          <a className="nav-download" href={installerUrl} download onClick={closeMenu}>Download <span>↓</span></a>
+          <a className="nav-download" href={installerUrl} onClick={handleDownload}>Download <span>↓</span></a>
         </div>
         <ThemeToggle theme={theme} setTheme={setTheme} />
         <button className="menu-button" aria-expanded={menuOpen} aria-label="Toggle navigation" onClick={() => setMenuOpen(!menuOpen)}><i></i><i></i></button>
@@ -73,7 +95,7 @@ export default function App() {
           <div className="status"><span></span> BUILT FOR WINDOWS</div>
           <h1>Your screen,<br /><em>on your terms.</em></h1>
           <p className="hero-text">A focused, private workspace for your calls, apps, and conversations—built to stay yours.</p>
-          <div className="hero-actions"><a className="button button-primary" href={installerUrl} download>Download for Windows <span>↓</span></a><a className="text-link" href="#how-it-works">See how it works <span>↓</span></a></div>
+          <div className="hero-actions"><a className="button button-primary" href={installerUrl} onClick={handleDownload}>Download for Windows <span>↓</span></a><a className="text-link" href="#how-it-works">See how it works <span>↓</span></a></div>
           <p className="platform-note">Windows 10 version 2004 or later <b>·</b> Offline-first</p>
         </div>
         <div className="hero-art reveal is-visible">
@@ -110,7 +132,7 @@ export default function App() {
 
       <section id="privacy" className="section privacy-section container"><div className="privacy-copy reveal"><p className="eyebrow">PRIVATE BY DEFAULT</p><h2>Your work stays<br /><em>your work.</em></h2><p>Private Window is designed so your private workspace stays on your display instead of automatically becoming part of a screen share.</p><a href="#download" className="text-link">Learn about privacy <span>→</span></a></div><div className="privacy-card reveal"><div className="shield">◇</div><div className="privacy-content"><div><span className="live-dot"></span> Protection active</div><h3>Visible to you.<br />Excluded from supported capture.</h3><p>Windows display affinity is applied to the Private Window workspace and its dialogs while protection is enabled.</p></div><div className="privacy-grid"><span>YOUR SCREEN</span><span>SUPPORTED CAPTURE</span><b>VISIBLE</b><b className="muted-cell">EXCLUDED</b></div></div></section>
 
-      <section id="download" className="section download-section"><div className="download-glow"></div><div className="container download-inner reveal"><p className="eyebrow">READY WHEN YOU ARE</p><h2>A little more privacy<br />goes a <em>long way.</em></h2><p>Get Private Window for Windows and make room for focused, private work.</p><a className="button button-light" href={installerUrl} download>Download installer <span>↓</span></a><small>Version 1.0 · Windows 10 (2004+) · 64-bit</small></div></section>
+      <section id="download" className="section download-section"><div className="download-glow"></div><div className="container download-inner reveal"><p className="eyebrow">READY WHEN YOU ARE</p><h2>A little more privacy<br />goes a <em>long way.</em></h2><p>Get Private Window for Windows and make room for focused, private work.</p><a className="button button-light" href={installerUrl} onClick={handleDownload}>Download installer <span>↓</span></a><small>Version 1.0 · Windows 10 (2004+) · 64-bit</small></div></section>
     </main>
 
     <footer><div className="container footer-main"><Logo /><p>Private work deserves a private space.</p><div><a href="#privacy">Privacy</a><a href="#top">Support</a><a href="#top">Release notes</a></div></div><div className="container footer-bottom"><span>© {new Date().getFullYear()} Private Window</span><span>Made for Windows</span></div></footer>
