@@ -1,0 +1,2 @@
+[functions.licensing]
+verify_jwt = false

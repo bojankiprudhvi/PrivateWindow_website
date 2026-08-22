@@ -92,3 +92,33 @@ download; Firebase Storage is not required.
 
 Before public release, the project also needs a licence decision, a support
 contact address, a privacy policy, and preferably Windows code signing.
+
+## Zero-fixed-cost licensing backend
+
+Firebase serves only the static site. Supabase free tier provides email-link sign-in,
+PostgreSQL, and one Edge Function for trials and licensing. Paid keys are issued
+manually after offline payment; a payment gateway can automate the same issuance
+endpoint later without changing keys or device rules.
+
+1. Create a Supabase project, keep the Email provider enabled, and run
+   `supabase/migrations/202608210001_licensing.sql` in the SQL editor.
+2. Copy `.env.example` to `.env.local` and enter the Supabase project URL, anon
+   key, Edge Function URL, and the email customers should contact.
+3. Configure Edge Function secrets: `PUBLIC_SITE_ORIGIN`,
+   `LICENSE_ENCRYPTION_KEY` (base64-encoded 32 random bytes),
+   `ENTITLEMENT_SIGNING_KEY`, `LICENSE_ADMIN_KEY`, and
+   `FREE_KEYS_ENABLED=true` while the launch promotion is active.
+4. Deploy with `supabase functions deploy licensing --no-verify-jwt`.
+5. After a customer signs in and pays offline, issue their key:
+
+   ```powershell
+   $env:LICENSE_ADMIN_KEY = 'your-secret'
+   .\scripts\issue-license.ps1 -ApiUrl 'https://PROJECT.supabase.co/functions/v1/licensing' -Email 'customer@example.com' -Plan pro
+   ```
+
+The command returns the key immediately and it also appears inside that user's
+authenticated website account. Supported plans are `single`, `pro`, and `power`.
+Use `free` only for a manually assigned promotional key.
+
+Never put service-role, encryption, signing, or administrator secrets in a
+`VITE_` variable. Vite variables are public browser configuration.

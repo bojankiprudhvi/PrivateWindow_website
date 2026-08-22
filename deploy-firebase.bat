@@ -4,13 +4,10 @@ setlocal EnableExtensions EnableDelayedExpansion
 REM Builds the current Windows installer, stages it in the static site, then
 REM deploys the existing Vite website to the Firebase project passed as %1.
 
-if "%~1"=="" (
-    echo Usage: deploy-firebase.bat FIREBASE_PROJECT_ID
-    echo Example: deploy-firebase.bat private-window-12345
-    exit /b 1
-)
+set "FIREBASE_PROJECT_ID=privatewindow"
 
-set "FIREBASE_PROJECT_ID=%~1"
+
+
 set "SITE_DIR=%~dp0"
 set "DOWNLOAD_DIR=%~dp0public\downloads"
 
